@@ -1,0 +1,9 @@
+<launch>
+
+  <node name="vcu_relay" pkg="vcu_relay" type="vcu_relay" />
+
+  <node name="span_pose" pkg="span_pose" type="span_pose" />
+
+  <node name="navigation" pkg="navigation" type="navigation" />
+
+</launch>

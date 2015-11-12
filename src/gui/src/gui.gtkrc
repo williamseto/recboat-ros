@@ -1,0 +1,64 @@
+
+style "button" {
+#	bg_pixmap[NORMAL] = "button2.png"
+#	bg_pixmap[ACTIVE] = "button2.png"
+#	bg_pixmap[PRELIGHT] = "button2.png"
+#	bg_pixmap[SELECTED] = "button2.png"
+#	bg[NORMAL] = "#ff0000"
+	bg[ACTIVE] = "#00ff00"
+	bg[PRELIGHT] = "#ffbbbb"
+#	bg[SELECTED] = "#ff0000"
+}
+
+style "enable" {
+	bg[NORMAL] = "#ff0000"
+	bg[ACTIVE] = "#ff0000"
+	bg[PRELIGHT] = "#ff0000"
+	bg[SELECTED] = "#ff0000"
+}
+
+style "text" {
+#	font_name = "Sans Italic Bold 14"
+	font_name = "Sans Bold 12"
+}
+
+style "status" {
+#	font_name = "Sans Italic 18"
+	font_name = "Sans 12"
+#	fg[NORMAL] = "#ff0000"
+}
+
+style "title" {
+#	font_name = "Sans Italic 22"
+	font_name = "Sans Italic 12"
+	fg[NORMAL] = "#0000ff"
+}
+
+style "datarate" {
+	font_name = "Sans 12"
+	fg[NORMAL] = "#000000"
+}
+
+style "statusbox" {
+	bg[NORMAL] = "#ff0000"
+}
+
+#class "GtkButton" style "button"
+#class "GtkLabel" style "text"
+
+widget "*.statusbar" style "status"
+widget "*.title" style "title"
+widget "*.enable" style "enable"
+widget "*.startlog" style "button"
+widget "*.startlog.*" style "text"
+
+widget "*.rate_label" style "datarate"
+widget "*.rot_label" style "datarate"
+widget "*.pitch_label" style "datarate"
+widget "*.fix_label" style "datarate"
+widget "*.nsat_label" style "datarate"
+widget "*.speed_label" style "datarate"
+widget "*.state_label" style "datarate"
+widget "*.tach_label" style "datarate"
+
+#widget "*.fix_box" style "statusbox"

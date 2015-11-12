@@ -1,0 +1,2 @@
+[paths]
+default = ssh://vcs.rec.ri.cmu.edu//san/project_data/recBoat/Software/recboat-ros
