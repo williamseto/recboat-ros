@@ -9,6 +9,10 @@
 #include <string>
 #include <stdlib.h>
 #include <stdio.h>
+#include <cstdlib>
+
+int NUM = 5;
+int imno = 0;
 
 /**
 Class to flip the image.
@@ -51,42 +55,56 @@ public:
       			return;
     		}
 
+	char buffer[33];
+        snprintf(buffer, sizeof(buffer), "%d", imno++);
+        std::string name = std::string("image_") + buffer + std::string(".png");
+	cv::imwrite(name, cv_ptr->image);			
     	// Flip the image
     	//cv::flip(cv_ptr->image, cv_ptr->image, -1);
 	cv::Mat gray, thresh;
 	cv::cvtColor(cv_ptr->image, gray, CV_BGR2GRAY);
 	cv::threshold(gray, thresh, 65, 255, cv::THRESH_BINARY);
-	int morph_size = 25;
+	int morph_size = NUM;
+	std::cout << morph_size << std::endl;
     	cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size( 2*morph_size + 1, 2*morph_size+1 ), cv::Point( morph_size, morph_size ) );
-	cv::morphologyEx(thresh, thresh, cv::MORPH_ERODE, element);
+	cv::morphologyEx(thresh, thresh, cv::MORPH_DILATE, element);
 	//cv::namedWindow("Image", cv::WINDOW_NORMAL);cv::imshow("Image", thresh);cv::waitKey();
 	std::vector<std::vector<cv::Point> > contours;
   	std::vector<cv::Vec4i> hierarchy;   	
 	findContours(thresh, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
 	int count  = 1;
 	for( int i = 0; i< contours.size(); i++ )
-		if(cv::contourArea(contours[i]) > 10000)
+		if(cv::contourArea(contours[i]) > 100)
      	{
-       		cv::Scalar color = cv::Scalar(0, 0, 255);
-       		cv::drawContours( cv_ptr->image, contours, i, color, 2, 20, hierarchy, 0, cv::Point() );
+       		cv::Scalar color = cv::Scalar(255, 0, 0);
+       		cv::drawContours( cv_ptr->image, contours, i, color, 2, 10, hierarchy, 0, cv::Point() );
 		char buffer[33];
 		snprintf(buffer, sizeof(buffer), "%d", count++);
 		std::string name = std::string("Ob No. ") + buffer;	
-		cv::putText(cv_ptr->image, name, contours[i][1], CV_FONT_HERSHEY_COMPLEX, 2, color, 5, 8);
+		// cv::putText(cv_ptr->image, name, contours[i][1], CV_FONT_HERSHEY_COMPLEX, 1, color, 3, 2);
      	}
 		image_pub_.publish(cv_bridge::CvImage(std_msgs::Header(), "bgr8", cv_ptr->image).toImageMsg());
 	for( int i = 0; i< contours.size(); i++ ){std::cout << "New Object Detected --> ";
 		for( int j = 0; j < contours[i].size(); j++ ){
 			std::cout << contours[i][j] << "\t";
-		}std::cout<<std::endl;}
-			
+	}std::cout<<std::endl;}
+
+	
 	//cv::namedWindow("Image", cv::WINDOW_NORMAL);cv::imshow("Image", thresh);cv::waitKey();
 	
   	}
 };
 
+void help(){
+	std::cout << "Usage ./detect_obs <size-of-morphology>" << std::endl;
+	exit(1);
+}
+
 int main(int argc, char** argv)
 {
+  if(argc!=2)
+	help();
+  NUM = atoi(argv[1]);
   ros::init(argc, argv, "detect_obs");
   Filter fp;
   ros::spin();
