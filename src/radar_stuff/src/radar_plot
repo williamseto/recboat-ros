@@ -60,10 +60,10 @@ def polar2cartesian(r, t, grid, x, y, order=3):
 def callback(data):
 
     #need to convert from hex string for some reason
-    my_list = data.data.split(",")
+    #my_list = data.data.split(",")
     
     new_data = []
-    new_data = map(ord, my_list[0])
+    new_data = map(ord, data.data)
 
     #print len(new_data)
     if len(new_data) != 1048576:

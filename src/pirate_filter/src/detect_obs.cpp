@@ -55,10 +55,12 @@ public:
       			return;
     		}
 
+	/**
 	char buffer[33];
         snprintf(buffer, sizeof(buffer), "%d", imno++);
         std::string name = std::string("image_") + buffer + std::string(".png");
 	cv::imwrite(name, cv_ptr->image);			
+	**/
     	// Flip the image
     	//cv::flip(cv_ptr->image, cv_ptr->image, -1);
 	cv::Mat gray, thresh;
