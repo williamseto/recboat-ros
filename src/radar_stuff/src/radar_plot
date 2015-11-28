@@ -95,7 +95,7 @@ def listener():
     # name for our 'listener' node so that multiple listeners can
     # run simultaneously.
     rospy.init_node('listener') 
-    pub = rospy.Publisher('radar_raw_will', Image, queue_size=10)
+    pub = rospy.Publisher('radar_raw_will', Image, queue_size=1)
     sub = rospy.Subscriber("raw_radar_image", UInt8MultiArray, callback, queue_size=10, buff_size=5000000)
 
     # spin() simply keeps python from exiting until this node is stopped
@@ -110,11 +110,11 @@ def listener():
     t = np.linspace(0., 2*np.pi, nt)
 
     # Define new cartesian grid
-    nx = 1000
-    ny = 1000
+    nx = 250
+    ny = 250
 
-    x = np.linspace(-100., 100., nx)
-    y = np.linspace(-100., 100., ny)
+    x = np.linspace(-125., 125., nx)
+    y = np.linspace(-125., 125., ny)
 
 
     global scan

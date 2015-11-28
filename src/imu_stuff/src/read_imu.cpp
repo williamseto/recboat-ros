@@ -11,6 +11,8 @@
 #include <visualization_msgs/Marker.h>
 #include <cmath>
 #include "latLong-UTMConversion.h"
+#include "std_msgs/Float64.h"
+#include "std_msgs/Float32.h"
 
 class Location
 {
@@ -24,48 +26,66 @@ public:
   
   ros::Subscriber sub;
   ros::Publisher pub;
+  ros::Publisher pub_lat;
+  ros::Publisher pub_lon;
+  ros::Publisher pub_yaw;  
 
   double lat;
   double lon;
+  double yaw;
   double pix_x;
   double pix_y;
+  
+  std_msgs::Float64 boat_lat;
+  std_msgs::Float64 boat_lon;
+  std_msgs::Float32 boat_yaw;
 
-  double ori_x = -80.021197;
-  double ori_y = 40.474416;
-  double grid_size = 0.000043;
-
-  //ori_x = -80.019460;
-  //ori_y = 40.477703;
- // grid_size = 0.000042;
+  double ori_x;
+  double ori_y;
+  double grid_size;
 
   Location()
   {
+    ori_x = -80.019460;
+    ori_y = 40.477703;
+    grid_size = 0.000042;
     sub = n.subscribe("recboat/span_pose", 10, &Location::Callback, this);
     pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+    pub_lat = n.advertise<std_msgs::Float64>("boat_lat", 10);
+    pub_lon = n.advertise<std_msgs::Float64>("boat_lon", 10);
+    pub_yaw = n.advertise<std_msgs::Float32>("boat_yaw", 10);
+
   }  
   
   //ros::Publisher pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
   
-  
-    
-
   void Callback(const span_pose::span_pose &msg)
     {
     double north, east;
     UTM_ZONE_TYPE zone;
 
-
     lat = msg.lat;
     lon = msg.lon;
+    yaw = msg.yaw;
+
+    boat_lat.data = msg.lat;
+    boat_lon.data = msg.lon;
+    boat_yaw.data = msg.yaw;
+
+    pub_lat.publish(boat_lat);
+    pub_lon.publish(boat_lon);
+    pub_yaw.publish(boat_yaw);
+
 
     pix_y =  1200 + (lat - ori_y)/grid_size;
 
     pix_x =   (lon - ori_x)/grid_size;
 
     std::cout << "lat: "  << lat
-              << " lon: " << lon
+              << " lon: "  << lon
+	      << " yaw: "  << yaw
               << " pix_x: "<< pix_x
-              << " pix_y: " << pix_y << '\n' ;
+              << " pix_y: "<< pix_y << '\n' ;
     //4.6638meter/pixel
     /*
     LLtoUTM(23, lat, lon, north, east, zone);
@@ -155,12 +175,6 @@ public:
 
   }
 };
-
-
-
-
-
-
 
 int main(int argc, char** argv)
 {
