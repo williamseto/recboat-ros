@@ -61,9 +61,11 @@ window
 floorplan
 ( 
   name "willow"
-  bitmap "willow.pgm"
+#  bitmap "willow.pgm"
+  bitmap "map_bri.bmp"
 #size [58.05 45.625 1.0]
-  size [56.3 45.625 1.0]
+#  size [56.3 45.625 1.0]
+  size [45.0 30.0 1.0]
   pose [-22.812 29.250 0 90.000] 
 )
 
