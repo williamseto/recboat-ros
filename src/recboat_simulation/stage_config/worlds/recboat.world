@@ -51,8 +51,10 @@ interval_sim 100  # simulation timestep in milliseconds
 floorplan
 ( 
   name "willow"
-  bitmap "../maps/river.pgm"
-  size [58.300 16.6 1.000]
+  bitmap "../maps/map_bri.bmp"
+  #size [58.300 16.6 1.000]
+  #size [180 120 1]
+  size [180.0 120.0 1]
   pose [ -22.812 29.150 0 90.000 ] 
 )
 
