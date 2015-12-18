@@ -9,12 +9,13 @@ using namespace std;
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
-#include "span_pose.h"
+#include "span_pose/span_pose.h"
 #include "std_msgs/UInt8MultiArray.h"
 #include <geometry_msgs/PoseStamped.h>
 
-#include "nav_cmd.h"
-#include "nav_wpt.h"
+
+#include "navigation/nav_cmd.h"
+#include "navigation/nav_wpt.h"
 
 #include <tf/transform_datatypes.h>
 

@@ -202,4 +202,4 @@ add_dependencies(navigatexytheta pp_stuff_generate_messages_cpp)
 
 add_executable(ppnode src/ppnode.cpp)
 target_link_libraries(ppnode ${catkin_LIBRARIES} )
-add_dependencies(ppnode pp_stuff_generate_messages_cpp)
+add_dependencies(ppnode pp_stuff_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
