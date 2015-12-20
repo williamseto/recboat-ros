@@ -38,6 +38,19 @@ enum PlannerType
     NUM_PLANNER_TYPES
 };
 
+/* MAP CONSTANTS */
+
+//double map_ref_x, map_ref_y, map_scale_x, map_scale_y;
+//int map_pix_height;
+
+double map_ref_x = 577336.797385;
+double map_ref_y = 4484193.218161;
+double map_scale_x = 4.997183;
+double map_scale_y = 4.997080;
+int map_pix_height = 2455;
+
+///////////////////////////
+
 
 visualization_msgs::Marker createPathMarker(string ns) {
 
@@ -128,6 +141,14 @@ visualization_msgs::Marker createBoatMarker(string ns) {
     marker.scale.z = 0.01;
 
     marker.lifetime = ros::Duration();
+
+    //add a point initially so later on, we just need to update the point
+    geometry_msgs::Point p;
+    p.x = 0.0;
+    p.y = 0.0;
+    p.z = 0.0;
+    marker.points.push_back(p);
+
     return marker;
 }
 
@@ -153,6 +174,10 @@ public:
     EnvironmentNAVXYTHETALAT m_env;
     SBPLPlanner* m_planner;
 
+    vector<int> m_solutionIDs;
+    visualization_msgs::Marker m_pathMarker;
+    visualization_msgs::Marker m_boatMarker;
+
     PathPlanNode() {
         m_obstacleSub = m_nh.subscribe("radar_obs", 1, &PathPlanNode::obstacleCB, this);
         m_poseSub = m_nh.subscribe("recboat/span_pose", 1, &PathPlanNode::poseCB, this);
@@ -172,6 +197,9 @@ public:
         m_goalTheta = 0;
         m_newgoal = false;
 
+        m_pathMarker = createPathMarker("path");
+        m_boatMarker = createBoatMarker("boat");
+
     }
 
     ~PathPlanNode() {
@@ -180,22 +208,9 @@ public:
 
     void poseCB(const span_pose::span_pose &msg) {
 
-        double ref_x, ref_y, grid_size_x, grid_size_y;
-        int map_pix_height;
-
-        ref_x = 577336.797385;
-        ref_y = 4484193.218161;
-        grid_size_x = 4.997183;
-        grid_size_y = 4.997080;
-        map_pix_height = 2455;
-
-        m_boatX = (msg.east - ref_x)/grid_size_x;
-        m_boatY = map_pix_height + (msg.north - ref_y)/grid_size_y;
+        m_boatX = (msg.east - map_ref_x)/map_scale_x;
+        m_boatY = map_pix_height + (msg.north - map_ref_y)/map_scale_y;
         m_boatYaw = msg.yaw;
-
-        //double test_east = (m_boatX * grid_size_x) + ref_x;
-        //double test_north = ((m_boatY - map_pix_height) * grid_size_y) + ref_y;
-        //printf("(%f %f) (%f %f)\n", msg.east, test_east, msg.north, test_north);
 
     }
 
@@ -308,7 +323,10 @@ public:
 
     }
 
-    int runPlannerOnce(vector<int>& solution_stateIDs_V) {
+    int runPlannerOnce() {
+
+        //scale start & goal according to resolution of map
+        //currently hard-coded to 5 meters per pixel
         double startx = m_boatX * 5;
         double starty = m_boatY * 5;
 
@@ -318,7 +336,7 @@ public:
         //convert from heading to (x,y,theta) convention
         double starttheta = (m_boatYaw - M_PI/2) * -1;
         
-        printf("%f %f %f\n", m_boatX, m_boatY, m_boatYaw);
+        //printf("%f %f %f\n", m_boatX, m_boatY, m_boatYaw);
 
         int newstartstateID = m_env.SetStart(startx, starty, starttheta);
         int newgoalstateID = m_env.SetGoal(goalx, goaly, m_goalTheta);
@@ -335,10 +353,11 @@ public:
             throw new SBPL_Exception();
         }
 
-        // plan a path
+        // plan a path, and save in member variable
 
         printf("new planning...\n");
-        int bret = m_planner->replan(60.0, &solution_stateIDs_V);
+
+        int bret = m_planner->replan(60.0, &m_solutionIDs);
 
         return bret;
 
@@ -536,6 +555,42 @@ public:
         }
     }
 
+    void visualize() {
+        m_boatMarker.points[0].x = m_boatX;
+        m_boatMarker.points[0].y = m_boatY;
+
+
+        //visualize path
+        //add current position as first point
+
+        m_pathMarker.points.clear();
+
+        /*
+        geometry_msgs::Point p;
+        p.x = m_boatX;
+        p.y = m_boatY;
+        p.z = 0.0;
+        m_pathMarker.points.push_back(p);
+        */
+
+        for (int j = 0; j < (int)m_solutionIDs.size(); j++) {
+            int newx, newy, newtheta = 0;
+            m_env.GetCoordFromState(m_solutionIDs[j], newx, newy, newtheta);
+
+            //visualize path
+            geometry_msgs::Point p;
+            p.x = newx;
+            p.y = newy;
+            p.z = 0.0;
+            m_pathMarker.points.push_back(p);
+        }
+
+        m_pub.publish(m_boatMarker);
+        m_pub.publish(m_pathMarker);
+
+    
+    }
+
 };
 
 
@@ -552,60 +607,27 @@ int main(int argc, char** argv)
   //ppt.runPlanner();
 
   ros::Rate r(1);
-  vector<int> solution_stateIDs_V;
-  visualization_msgs::Marker path_marker = createPathMarker("path");
-  visualization_msgs::Marker boat_marker = createBoatMarker("boat");
-
-
-  double ref_x, ref_y, grid_size_x, grid_size_y;
-    int map_pix_height;
-
-    ref_x = 577336.797385;
-    ref_y = 4484193.218161;
-    grid_size_x = 4.997183;
-    grid_size_y = 4.997080;
-    map_pix_height = 2455;
 
 
   while(ros::ok()) {
 
 
-    boat_marker.points.clear();
-
-
-    geometry_msgs::Point p;
-    p.x = ppt.m_boatX;
-    p.y = ppt.m_boatY;
-    p.z = 0.0;
-    boat_marker.points.push_back(p);
-
     if(ppt.m_newgoal) {
-        solution_stateIDs_V.clear();
-        int bret = ppt.runPlannerOnce(solution_stateIDs_V);
-
-        path_marker.points.clear();
-
-        path_marker.points.push_back(p);
+        int bret = ppt.runPlannerOnce();
 
         if (bret) {
 
             //clear waypoints before sending
             ppt.ros_nav_wpt(0.0, 0.0, 0.0, WPT_CLEAR);
 
-            for (int j = 1; j < (int)solution_stateIDs_V.size(); j++) {
+            for (int j = 1; j < (int)ppt.m_solutionIDs.size(); j++) {
                 int newx, newy, newtheta = 0;
-                ppt.m_env.GetCoordFromState(solution_stateIDs_V[j], newx, newy, newtheta);
+                ppt.m_env.GetCoordFromState(ppt.m_solutionIDs[j], newx, newy, newtheta);
 
-                //visualize path
-                geometry_msgs::Point p;
-                p.x = newx;
-                p.y = newy;
-                p.z = 0.0;
-                path_marker.points.push_back(p);
 
                 //send waypoints
-                double test_east = (newx * grid_size_x) + ref_x;
-                double test_north = ((newy - map_pix_height) * grid_size_y) + ref_y;
+                double test_east = (newx * map_scale_x) + map_ref_x;
+                double test_north = ((newy - map_pix_height) * map_scale_y) + map_ref_y;
                 ppt.ros_nav_wpt(test_north, test_east, 0.1, WPT_ADD);
             }
 
@@ -615,8 +637,8 @@ int main(int argc, char** argv)
         ppt.m_newgoal = false;
         
     }
-    ppt.m_pub.publish(path_marker);
-    ppt.m_pub.publish(boat_marker);
+
+    ppt.visualize();
 
     
 
@@ -626,6 +648,6 @@ int main(int argc, char** argv)
 
 
 
-  ros::spin();
+  //ros::spin();
   return 0;
 }
