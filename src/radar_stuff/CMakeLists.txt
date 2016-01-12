@@ -13,6 +13,15 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED)
 
+OPTION (USE_OpenMP "Use OpenMP" ON)
+IF(USE_OpenMP)
+  FIND_PACKAGE(OpenMP)
+  IF(OPENMP_FOUND)
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  ENDIF()
+ENDIF()
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -193,6 +202,10 @@ include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 add_executable(radar_raw src/radar_raw.cpp)
 target_link_libraries(radar_raw ${catkin_LIBRARIES} rt)
 add_dependencies(radar_raw radar_stuff_generate_messages_cpp)
+
+add_executable(biofilter src/bio-filter.cpp)
+target_link_libraries(biofilter ${catkin_LIBRARIES} rt)
+add_dependencies(biofilter radar_stuff_generate_messages_cpp)
 
 
 

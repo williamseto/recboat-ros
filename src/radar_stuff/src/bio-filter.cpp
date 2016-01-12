@@ -25,6 +25,14 @@
 using namespace std;
 using namespace boost::math;
 
+typedef unsigned long long timestamp_t;
+
+static timestamp_t get_timestamp () {
+  struct timeval now;
+  gettimeofday (&now, NULL);
+  return  now.tv_usec + (timestamp_t)now.tv_sec * 1000000;
+}
+
 
 class bi_filter
 {
@@ -50,7 +58,7 @@ public:
   {
     spoke_n    = 16;    //ideally should be beamwidth / (360/2048)
     occupied_p = 0.5;   //prob. that a cell is occupied (used for the bino. distribution)
-    P_thresh   = 0.93;  //threshold for binomial cdf
+    P_thresh   = 0.95;  //threshold for binomial cdf
     raw_thresh = 0;     //threshold for the raw cell value (0-255) to be considered occupied
 
     sub = n.subscribe("raw_radar_image", 10, &bi_filter::Callback, this);
@@ -60,7 +68,10 @@ public:
   
   void Callback(const std_msgs::UInt8MultiArray &msg)
     {
-      cout<<"enter Callback"<<endl;
+      //cout<<"enter Callback"<<endl;
+
+      timestamp_t t0 = get_timestamp();
+
       // change msg to 2d array
       std_msgs::UInt8MultiArray filtered_data_msg;
 
@@ -81,6 +92,7 @@ public:
 
       }
       */
+
       for (int j=0; j<512; j++)     
       {
           for (int i=0; i<2048; i++)
@@ -93,6 +105,7 @@ public:
       uint8_t filtered_data[2048*512] = {0};
       double P = 0.0;
 
+      #pragma omp parallel for
       for (int j=0; j<512; j++)     
       {
           for (int i=0; i<2048; i++)
@@ -114,12 +127,11 @@ public:
             }
 
 
-            /*
-            for (int k=0; k<m; k++)
-            {
-              P = P + cdf(binomial(spoke_n, occupied_p),k);
-            }
-            */
+            
+            //for (int k=0; k<m; k++)
+            //{
+            //  P = P + cdf(binomial(spoke_n, occupied_p),k);
+            //}
 
             P = cdf(binomial(spoke_n, occupied_p),m);
             
@@ -142,6 +154,10 @@ public:
 
       filtered_data_msg.data.insert(filtered_data_msg.data.end(), &filtered_data[0], &filtered_data[2048*512]);
     	pub.publish(filtered_data_msg);
+
+      timestamp_t t1 = get_timestamp();
+
+      cout << (t1 - t0) << endl;
 
   }
 };
